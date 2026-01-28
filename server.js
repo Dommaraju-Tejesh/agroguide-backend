@@ -1,6 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const authRoutes = require("./routes/authRoutes");
+
 require("dotenv").config();
 
 const app = express();
@@ -15,6 +17,9 @@ mongoose.connect(process.env.MONGO_URL)
 app.get("/", (req, res) => {
     res.send("AgroGuide API Running");
 });
+
+app.use("/api/auth", authRoutes);
+
 
 app.listen(process.env.PORT, () => {
     console.log("Server started");
