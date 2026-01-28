@@ -1,4 +1,6 @@
 const AdvisoryRule = require("../models/AdvisoryRule");
+const AdvisoryHistory = require("../models/AdvisoryHistory");
+
 
 // Admin adds rule
 exports.addRule = async (req, res) => {
@@ -8,7 +10,7 @@ exports.addRule = async (req, res) => {
 
 // Farmer gets advice
 exports.getAdvice = async (req, res) => {
-    const { crop, soil, stage } = req.body;
+    const { crop, soil, stage, farmerId } = req.body;
 
     const rule = await AdvisoryRule.findOne({ crop, soil, stage });
 
@@ -16,5 +18,14 @@ exports.getAdvice = async (req, res) => {
         return res.json({ message: "No advice found" });
     }
 
+    await AdvisoryHistory.create({
+        farmerId,
+        crop,
+        soil,
+        stage,
+        advice: rule.advice
+    });
+
     res.json(rule);
 };
+
