@@ -32,3 +32,12 @@ exports.getAdvice = async (req, res) => {
   res.json(rule);
 };
 
+// ✅ THIS WAS MISSING
+exports.getHistory = async (req, res) => {
+  const history = await AdvisoryHistory.find({
+    farmerId: req.params.farmerId,
+  }).sort({ createdAt: -1 });
+
+  res.json(history);
+};
+
