@@ -1,12 +1,11 @@
 const mongoose = require("mongoose");
 
 const advisoryHistorySchema = new mongoose.Schema({
-  userId: mongoose.Schema.Types.ObjectId,
-  crop: String,
-  soil: String,
-  season: String,
-  advice: String,
-  date: { type: Date, default: Date.now }
-});
+    farmerId: String,
+    crop: String,
+    soil: String,
+    stage: String,
+    advice: String
+}, { timestamps: true });
 
 module.exports = mongoose.model("AdvisoryHistory", advisoryHistorySchema);
