@@ -11,7 +11,10 @@ exports.sendOTP = async (req, res) => {
 
     await client.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
-      .verifications.create({ to: `+91${phone}`, channel: "sms" });
+      .verifications.create({
+        to: `+91${phone}`,
+        channel: "sms",
+      });
 
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
@@ -21,11 +24,14 @@ exports.sendOTP = async (req, res) => {
 
 exports.verifyOTP = async (req, res) => {
   try {
-    const { phone, otp } = req.body;
+    const { phone, code } = req.body;
 
     const check = await client.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
-      .verificationChecks.create({ to: `+91${phone}`, code: otp });
+      .verificationChecks.create({
+        to: `+91${phone}`,
+        code,
+      });
 
     if (check.status === "approved") {
       res.json({ message: "OTP verified" });
