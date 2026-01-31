@@ -1,4 +1,5 @@
 const twilio = require("twilio");
+const User = require("../models/User");
 
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
@@ -24,20 +25,32 @@ exports.sendOTP = async (req, res) => {
 
 exports.verifyOTP = async (req, res) => {
   try {
-    const { phone, code } = req.body;
+    const { name, phone, otp } = req.body;
 
     const check = await client.verify.v2
-      .services(process.env.TWILIO_VERIFY_SERVICE_SID)
+      .services(process.env.TWILIO_SERVICE_SID)
       .verificationChecks.create({
         to: `+91${phone}`,
-        code,
+        code: otp,
       });
 
-    if (check.status === "approved") {
-      res.json({ message: "OTP verified" });
-    } else {
-      res.status(400).json({ message: "Invalid OTP" });
+    if (check.status !== "approved") {
+      return res.status(400).json({ message: "Invalid OTP" });
     }
+
+    // ✅ Create user here if not exists
+    let user = await User.findOne({ phone });
+
+    if (!user) {
+      user = await User.create({
+        name,
+        phone,
+        password: "otp-login", // dummy
+      });
+    }
+
+    res.json({ message: "OTP verified & user created", user });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
