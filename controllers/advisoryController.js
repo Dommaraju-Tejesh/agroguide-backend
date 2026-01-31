@@ -1,43 +1,65 @@
 const AdvisoryRule = require("../models/AdvisoryRule");
 const AdvisoryHistory = require("../models/AdvisoryHistory");
 
+// Helper to normalize text
+const normalize = (text) => text.trim().toLowerCase();
+
 // Admin adds rule
 exports.addRule = async (req, res) => {
-  const rule = await AdvisoryRule.create(req.body);
-  res.json(rule);
+  try {
+    const { crop, soil, stage, advice } = req.body;
+
+    const rule = await AdvisoryRule.create({
+      crop: normalize(crop),
+      soil: normalize(soil),
+      stage: normalize(stage),
+      advice,
+    });
+
+    res.json({ message: "Rule added successfully", rule });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // Farmer gets advice
 exports.getAdvice = async (req, res) => {
-  const { crop, soil, stage, farmerId } = req.body;
+  try {
+    const { crop, soil, stage, farmerId } = req.body;
 
-  const rule = await AdvisoryRule.findOne({
-    crop: new RegExp(`^${crop.trim()}$`, "i"),
-    soil: new RegExp(`^${soil.trim()}$`, "i"),
-    stage: new RegExp(`^${stage.trim()}$`, "i"),
-  });
+    const rule = await AdvisoryRule.findOne({
+      crop: normalize(crop),
+      soil: normalize(soil),
+      stage: normalize(stage),
+    });
 
-  if (!rule) {
-    return res.json({ message: "No advice found" });
+    if (!rule) {
+      return res.json({ message: "No advice found" });
+    }
+
+    await AdvisoryHistory.create({
+      farmerId,
+      crop: normalize(crop),
+      soil: normalize(soil),
+      stage: normalize(stage),
+      advice: rule.advice,
+    });
+
+    res.json(rule);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  await AdvisoryHistory.create({
-    farmerId,
-    crop,
-    soil,
-    stage,
-    advice: rule.advice,
-  });
-
-  res.json(rule);
 };
 
-// ✅ THIS WAS MISSING
+// History
 exports.getHistory = async (req, res) => {
-  const history = await AdvisoryHistory.find({
-    farmerId: req.params.farmerId,
-  }).sort({ createdAt: -1 });
+  try {
+    const history = await AdvisoryHistory.find({
+      farmerId: req.params.farmerId,
+    });
 
-  res.json(history);
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
-
