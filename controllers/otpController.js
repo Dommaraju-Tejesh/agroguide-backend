@@ -13,7 +13,7 @@ exports.sendOTP = async (req, res) => {
     await client.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
       .verifications.create({
-        to: `+91${phone}`,
+        to: phone,
         channel: "sms",
       });
 
@@ -30,7 +30,7 @@ exports.verifyOTP = async (req, res) => {
     const check = await client.verify.v2
       .services(process.env.TWILIO_SERVICE_SID)
       .verificationChecks.create({
-        to: `+91${phone}`,
+        to: phone,
         code: otp,
       });
 
