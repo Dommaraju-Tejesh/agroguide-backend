@@ -11,6 +11,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/otp", require("./routes/otpRoutes"));
+
 
 mongoose.connect(process.env.MONGO_URL)
 .then(() => console.log("MongoDB Connected"))
