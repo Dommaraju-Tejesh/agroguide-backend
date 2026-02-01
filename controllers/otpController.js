@@ -6,16 +6,22 @@ const client = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-const SERVICE_SID = process.env.TWILIO_VERIFY_SERVICE_SID; // ✅ ONE SID ONLY
+// ✅ Use ONE correct env name everywhere
+const SERVICE_SID = process.env.TWILIO_VERIFY_SERVICE_SID;
 
 exports.sendOTP = async (req, res) => {
   try {
     const { phone } = req.body;
 
+    // ✅ Ensure E.164 format (+91...)
+    const to = phone.startsWith("+") ? phone : `+91${phone}`;
+
+    console.log("SEND OTP TO 👉", to);
+
     await client.verify.v2
       .services(SERVICE_SID)
       .verifications.create({
-        to: phone,
+        to,
         channel: "sms",
       });
 
@@ -30,10 +36,15 @@ exports.verifyOTP = async (req, res) => {
   try {
     const { name, phone, otp } = req.body;
 
+    // ✅ Same formatting rule
+    const to = phone.startsWith("+") ? phone : `+91${phone}`;
+
+    console.log("VERIFY OTP FOR 👉", to);
+
     const check = await client.verify.v2
-      .services(SERVICE_SID) // ✅ SAME SID
+      .services(SERVICE_SID)
       .verificationChecks.create({
-        to: phone,
+        to,
         code: otp,
       });
 
@@ -41,18 +52,17 @@ exports.verifyOTP = async (req, res) => {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    let user = await User.findOne({ phone });
+    let user = await User.findOne({ phone: to });
 
     if (!user) {
       user = await User.create({
         name,
-        phone,
+        phone: to,
         password: "otp-login",
       });
     }
 
     res.json({ message: "OTP verified & user created", user });
-
   } catch (err) {
     console.log("VERIFY OTP ERROR 👉", err.message);
     res.status(500).json({ error: err.message });
