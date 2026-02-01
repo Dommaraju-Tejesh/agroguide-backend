@@ -1,24 +1,33 @@
+const twilio = require("twilio");
 const User = require("../models/User");
 
-// In-memory OTP store (temporary)
-const otpStore = {};
+const client = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+// ✅ Use ONE correct env name everywhere
+const SERVICE_SID = process.env.TWILIO_VERIFY_SERVICE_SID;
 
 exports.sendOTP = async (req, res) => {
   try {
     const { phone } = req.body;
 
+    // ✅ Ensure E.164 format (+91...)
     const to = phone.startsWith("+") ? phone : `+91${phone}`;
 
-    // generate 6 digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log("SEND OTP TO 👉", to);
 
-    // store OTP
-    otpStore[to] = otp;
+    await client.verify.v2
+      .services(SERVICE_SID)
+      .verifications.create({
+        to,
+        channel: "sms",
+      });
 
-    console.log("🟢 OTP for", to, "is 👉", otp);
-
-    res.json({ message: "OTP generated (check server logs)" });
+    res.json({ message: "OTP sent successfully" });
   } catch (err) {
+    console.log("SEND OTP ERROR 👉", err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -27,14 +36,21 @@ exports.verifyOTP = async (req, res) => {
   try {
     const { name, phone, otp } = req.body;
 
+    // ✅ Same formatting rule
     const to = phone.startsWith("+") ? phone : `+91${phone}`;
 
-    // check OTP
-    if (otpStore[to] !== otp) {
+    console.log("VERIFY OTP FOR 👉", to);
+
+    const check = await client.verify.v2
+      .services(SERVICE_SID)
+      .verificationChecks.create({
+        to,
+        code: otp,
+      });
+
+    if (check.status !== "approved") {
       return res.status(400).json({ message: "Invalid OTP" });
     }
-
-    delete otpStore[to]; // remove after use
 
     let user = await User.findOne({ phone: to });
 
@@ -48,6 +64,7 @@ exports.verifyOTP = async (req, res) => {
 
     res.json({ message: "OTP verified & user created", user });
   } catch (err) {
+    console.log("VERIFY OTP ERROR 👉", err.message);
     res.status(500).json({ error: err.message });
   }
 };
