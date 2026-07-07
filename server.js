@@ -3,7 +3,6 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const transporter = require("./config/mailer");
 
 const authRoutes = require("./routes/authRoutes");
 const advisoryRoutes = require("./routes/advisoryRoutes");
@@ -53,14 +52,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/advisory", advisoryRoutes);
 app.use("/api/question", questionRoutes);
 
-app.listen(process.env.PORT || 5000, async () => {
+app.listen(process.env.PORT || 5000, () => {
   console.log(`Server started on port ${process.env.PORT || 5000}`);
-
-  try {
-    await transporter.verify();
-    console.log("✅ Gmail SMTP connected successfully");
-  } catch (err) {
-    console.log("❌ Gmail SMTP connection failed");
-    console.log(err.message);
-  }
 });
