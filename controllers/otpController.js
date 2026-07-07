@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const resend = require("../config/mailer");
+const transporter = require("../config/mailer");
 
 // Store OTPs temporarily in memory
 const otpStore = new Map();
@@ -29,25 +29,28 @@ exports.sendOTP = async (req, res) => {
       expiresAt: Date.now() + 5 * 60 * 1000,
     });
 
-    await resend.emails.send({
-      from: "AgroGuide <onboarding@resend.dev>",
+    await transporter.sendMail({
+      from: {
+        name: "AgroGuide",
+        address: "d.tejeshraju67@gmail.com",
+      },
       to: email,
       subject: "AgroGuide OTP Verification",
       html: `
-    <div style="font-family:Arial;padding:20px">
-      <h2>AgroGuide</h2>
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>🌿 AgroGuide</h2>
 
-      <p>Your OTP is:</p>
+          <p>Your OTP is:</p>
 
-      <h1 style="letter-spacing:5px;color:#198754">
-        ${otp}
-      </h1>
+          <h1 style="letter-spacing:5px;color:#198754;">
+            ${otp}
+          </h1>
 
-      <p>This OTP is valid for <b>5 minutes</b>.</p>
+          <p>This OTP is valid for <b>5 minutes</b>.</p>
 
-      <p>If you didn't request this, ignore this email.</p>
-    </div>
-  `,
+          <p>If you didn't request this, ignore this email.</p>
+        </div>
+      `,
     });
 
     res.json({
